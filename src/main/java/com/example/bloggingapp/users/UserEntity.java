@@ -21,13 +21,13 @@ public class UserEntity extends BaseEntity {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "auth_token", nullable = false)
+    @Column(name = "auth_token", nullable = true)
     private String authToken;
 
-    @Column(name = "bio", nullable = false)
+    @Column(name = "bio", nullable = true)
     private String bio;
 
-    @Column(name = "image", nullable = false)
+    @Column(name = "image", nullable = true)
     private String image;
 
     @ManyToMany(mappedBy = "likedBy")
