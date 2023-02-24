@@ -1,5 +1,6 @@
 package com.example.bloggingapp.users;
 
+import com.example.bloggingapp.security.jwt.JwtService;
 import com.example.bloggingapp.users.dtos.CreateUserRequestDTO;
 import com.example.bloggingapp.users.dtos.LoginUserDTO;
 import com.example.bloggingapp.users.dtos.UserResponseDTO;
@@ -18,10 +19,14 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
+    private final JwtService jwtService;
+
+    public UserService(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder,
+                       JwtService jwtService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     private List<UserResponseDTO> convertToUserResponses(List<UserEntity> userEntities) {
@@ -45,7 +50,10 @@ public class UserService {
 
         var savedUser = userRepository.save(userEntity);
 
-        return modelMapper.map(savedUser, UserResponseDTO.class);
+        var userResponse = modelMapper.map(savedUser, UserResponseDTO.class);
+        userResponse.setToken(jwtService.createToken(userResponse.getId()));
+
+        return userResponse;
     }
 
     public UserResponseDTO getUserById(Integer userId) {
@@ -73,7 +81,10 @@ public class UserService {
         if (!passwordEncoder.matches(loginUserDTO.getPassword(), userEntity.getPassword()))
             throw new InvalidPasswordException();
 
-        return modelMapper.map(userEntity, UserResponseDTO.class);
+        var userResponse = modelMapper.map(userEntity, UserResponseDTO.class);
+        userResponse.setToken(jwtService.createToken(userResponse.getId()));
+
+        return userResponse;
     }
 
     static class UserExistException extends IllegalArgumentException {
