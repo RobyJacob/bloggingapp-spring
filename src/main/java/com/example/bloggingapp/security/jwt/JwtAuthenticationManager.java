@@ -3,12 +3,14 @@ package com.example.bloggingapp.security.jwt;
 import com.example.bloggingapp.users.UserService;
 import com.example.bloggingapp.users.dtos.UserPrincipalDTO;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 @Component
+@Primary
 public class JwtAuthenticationManager implements AuthenticationManager {
     private final JwtService jwtService;
 
