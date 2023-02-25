@@ -32,15 +32,28 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
+    @GetMapping("/")
+    public ResponseEntity<List<UserResponseDTO>> getUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> getUser(@RequestParam(name = "username") Optional<String> username) {
-        return username.map(name -> ResponseEntity.ok(userService.getUsersByUsername(name)))
-                .orElseGet(() -> ResponseEntity.ok(userService.getAllUsers()));
+    public ResponseEntity<List<UserResponseDTO>> getUsersByUsername(
+            @RequestParam(name = "username") Optional<String> username) {
+        if (username.isEmpty()) throw new RuntimeException("Username argument cannot be empty");
+
+        return ResponseEntity.ok(userService.getUsersByUsername(username.get()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDTO> loginUser(@RequestBody LoginUserDTO loginUserDTO) {
-        return ResponseEntity.accepted().body(userService.loginUser(loginUserDTO));
+    public ResponseEntity<UserResponseDTO> loginUser(@RequestBody LoginUserDTO loginUserDTO,
+                                                     @RequestParam(name = "auth_type", defaultValue = "jwt")
+                                                     String authType) {
+        AuthType auth = AuthType.JWT;
+
+        if (authType.equals("auth_token")) auth = AuthType.AUTH_TOKEN;
+
+        return ResponseEntity.accepted().body(userService.loginUser(loginUserDTO, auth));
     }
 
     @ExceptionHandler({

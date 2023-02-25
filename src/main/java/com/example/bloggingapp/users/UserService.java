@@ -1,8 +1,10 @@
 package com.example.bloggingapp.users;
 
+import com.example.bloggingapp.security.auth_tokens.AuthTokenService;
 import com.example.bloggingapp.security.jwt.JwtService;
 import com.example.bloggingapp.users.dtos.CreateUserRequestDTO;
 import com.example.bloggingapp.users.dtos.LoginUserDTO;
+import com.example.bloggingapp.users.dtos.UserResponseDTO;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,23 +22,26 @@ public class UserService {
 
     private final JwtService jwtService;
 
+    private final AuthTokenService authTokenService;
+
     public UserService(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService, AuthTokenService authTokenService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.authTokenService = authTokenService;
     }
 
-    private List<com.example.bloggingapp.users.dtos.UserResponseDTO> convertToUserResponses(List<UserEntity> userEntities) {
-        List<com.example.bloggingapp.users.dtos.UserResponseDTO> userResponses = new ArrayList<>();
+    private List<UserResponseDTO> convertToUserResponses(List<UserEntity> userEntities) {
+        List<UserResponseDTO> userResponses = new ArrayList<>();
 
-        userEntities.forEach(userEntity -> userResponses.add(modelMapper.map(userEntity, com.example.bloggingapp.users.dtos.UserResponseDTO.class)));
+        userEntities.forEach(userEntity -> userResponses.add(modelMapper.map(userEntity, UserResponseDTO.class)));
 
         return userResponses;
     }
 
-    public com.example.bloggingapp.users.dtos.UserResponseDTO createUser(CreateUserRequestDTO createUserRequestDTO) {
+    public UserResponseDTO createUser(CreateUserRequestDTO createUserRequestDTO) {
         if (!createUserRequestDTO.getEmail().matches("\\w+@\\w+\\.\\w+"))
             throw new InvalidEmailException(createUserRequestDTO.getEmail());
 
@@ -49,39 +54,47 @@ public class UserService {
 
         var savedUser = userRepository.save(userEntity);
 
-        var userResponse = modelMapper.map(savedUser, com.example.bloggingapp.users.dtos.UserResponseDTO.class);
+        var userResponse = modelMapper.map(savedUser, UserResponseDTO.class);
         userResponse.setToken(jwtService.createToken(userResponse.getId()));
 
         return userResponse;
     }
 
-    public com.example.bloggingapp.users.dtos.UserResponseDTO getUserById(Integer userId) {
+    public UserResponseDTO getUserById(Integer userId) {
         var user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
-        return modelMapper.map(user, com.example.bloggingapp.users.dtos.UserResponseDTO.class);
+        return modelMapper.map(user, UserResponseDTO.class);
     }
 
-    public List<com.example.bloggingapp.users.dtos.UserResponseDTO> getUsersByUsername(String username) {
+    public List<UserResponseDTO> getUsersByUsername(String username) {
         var userEntities = userRepository.findAllByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(username));
 
         return convertToUserResponses(userEntities);
     }
 
-    public List<com.example.bloggingapp.users.dtos.UserResponseDTO> getAllUsers() {
+    public List<UserResponseDTO> getAllUsers() {
         var users = userRepository.findAll();
 
         return convertToUserResponses(users);
     }
 
-    public com.example.bloggingapp.users.dtos.UserResponseDTO loginUser(LoginUserDTO loginUserDTO) {
+    public UserResponseDTO loginUser(LoginUserDTO loginUserDTO,
+                                     AuthType authType) {
         var userEntity = userRepository.findByUsername(loginUserDTO.getUsername());
 
         if (!passwordEncoder.matches(loginUserDTO.getPassword(), userEntity.getPassword()))
             throw new InvalidPasswordException();
 
-        var userResponse = modelMapper.map(userEntity, com.example.bloggingapp.users.dtos.UserResponseDTO.class);
-        userResponse.setToken(jwtService.createToken(userResponse.getId()));
+        var userResponse = modelMapper.map(userEntity, UserResponseDTO.class);
+
+        switch (authType) {
+            case JWT:
+                userResponse.setToken(jwtService.createToken(userResponse.getId()));
+                break;
+            case AUTH_TOKEN:
+                userResponse.setToken(authTokenService.createAuthToken(userEntity).toString());
+        }
 
         return userResponse;
     }
