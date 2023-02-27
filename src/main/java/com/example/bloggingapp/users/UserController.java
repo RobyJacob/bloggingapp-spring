@@ -4,12 +4,13 @@ import com.example.bloggingapp.commons.ErrorResponse;
 import com.example.bloggingapp.users.dtos.CreateUserRequestDTO;
 import com.example.bloggingapp.users.dtos.LoginUserDTO;
 import com.example.bloggingapp.users.dtos.UserResponseDTO;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -27,22 +28,19 @@ public class UserController {
         return ResponseEntity.created(URI.create("/users/" + savedUser.getId())).body(savedUser);
     }
 
-    @GetMapping("/{user_id}")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable("user_id") Integer userId) {
-        return ResponseEntity.ok(userService.getUserById(userId));
-    }
-
-    @GetMapping("/")
-    public ResponseEntity<List<UserResponseDTO>> getUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
-
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> getUsersByUsername(
-            @RequestParam(name = "username") Optional<String> username) {
-        if (username.isEmpty()) throw new RuntimeException("Username argument cannot be empty");
+    public ResponseEntity<List<UserResponseDTO>> getUsers(@RequestParam(value = "page", defaultValue = "0")
+                                                              Integer page,
+                                                          @RequestParam(value = "size", defaultValue = "5")
+                                                          Integer size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 5));
 
-        return ResponseEntity.ok(userService.getUsersByUsername(username.get()));
+        return ResponseEntity.ok(userService.getAllUsers(pageable));
+    }
+
+    @GetMapping("/{username}")
+    public ResponseEntity<UserResponseDTO> getUsersByUsername(@PathVariable("username") String username) {
+        return ResponseEntity.ok(userService.getUserByUsername(username));
     }
 
     @PostMapping("/login")

@@ -6,6 +6,7 @@ import com.example.bloggingapp.users.dtos.CreateUserRequestDTO;
 import com.example.bloggingapp.users.dtos.LoginUserDTO;
 import com.example.bloggingapp.users.dtos.UserResponseDTO;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,14 +34,6 @@ public class UserService {
         this.authTokenService = authTokenService;
     }
 
-    private List<UserResponseDTO> convertToUserResponses(List<UserEntity> userEntities) {
-        List<UserResponseDTO> userResponses = new ArrayList<>();
-
-        userEntities.forEach(userEntity -> userResponses.add(modelMapper.map(userEntity, UserResponseDTO.class)));
-
-        return userResponses;
-    }
-
     public UserResponseDTO createUser(CreateUserRequestDTO createUserRequestDTO) {
         if (!createUserRequestDTO.getEmail().matches("\\w+@\\w+\\.\\w+"))
             throw new InvalidEmailException(createUserRequestDTO.getEmail());
@@ -54,10 +47,7 @@ public class UserService {
 
         var savedUser = userRepository.save(userEntity);
 
-        var userResponse = modelMapper.map(savedUser, UserResponseDTO.class);
-        userResponse.setToken(jwtService.createToken(userResponse.getId()));
-
-        return userResponse;
+        return modelMapper.map(savedUser, UserResponseDTO.class);
     }
 
     public UserResponseDTO getUserById(Integer userId) {
@@ -66,17 +56,20 @@ public class UserService {
         return modelMapper.map(user, UserResponseDTO.class);
     }
 
-    public List<UserResponseDTO> getUsersByUsername(String username) {
-        var userEntities = userRepository.findAllByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException(username));
+    public UserResponseDTO getUserByUsername(String username) {
+        var userEntity = userRepository.findByUsername(username);
 
-        return convertToUserResponses(userEntities);
+        return modelMapper.map(userEntity, UserResponseDTO.class);
     }
 
-    public List<UserResponseDTO> getAllUsers() {
-        var users = userRepository.findAll();
+    public List<UserResponseDTO> getAllUsers(Pageable page) {
+        List<UserEntity> users = userRepository.findAllUsers(page);
 
-        return convertToUserResponses(users);
+        List<UserResponseDTO> userResponses = new ArrayList<>();
+
+        users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponseDTO.class)));
+
+        return userResponses;
     }
 
     public UserResponseDTO loginUser(LoginUserDTO loginUserDTO,
