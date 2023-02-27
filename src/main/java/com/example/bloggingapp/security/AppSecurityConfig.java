@@ -32,6 +32,7 @@ public class AppSecurityConfig {
                    .antMatchers(HttpMethod.POST, "/users/login").permitAll()
                    .antMatchers(HttpMethod.POST, "/users").permitAll()
                    .antMatchers(HttpMethod.GET, "/articles").permitAll()
+                   .antMatchers(HttpMethod.GET, "/articles/{article_slug}").permitAll()
                    .anyRequest().authenticated();
         }).addFilterBefore(authTokenAuthenticationFilter, AnonymousAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, AuthTokenAuthenticationFilter.class).build();

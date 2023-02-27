@@ -5,10 +5,7 @@ import com.example.bloggingapp.users.UserEntity;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.util.List;
 
 @Entity(name = "articles")
@@ -19,7 +16,7 @@ public class ArticleEntity  extends BaseEntity {
     private String title;
 
     @Column(name = "slug", nullable = false)
-    private String slig;
+    private String slug;
 
     @Column(name = "sub_title")
     private String subTitle;
@@ -28,6 +25,7 @@ public class ArticleEntity  extends BaseEntity {
     private String body;
 
     @ManyToOne
+    @JoinColumn(nullable = false)
     private UserEntity author;
 
     @ManyToMany
