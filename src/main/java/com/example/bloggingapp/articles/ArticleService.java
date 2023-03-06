@@ -29,6 +29,11 @@ public class ArticleService {
         this.userService = userService;
     }
 
+    private String getSlug(String title, String subTitle) {
+        return title.replaceAll("\\s", "")
+                .concat("-").concat(subTitle.replaceAll("\\s", ""));
+    }
+
     public List<ArticleGeneralResponseDTO> getAllArticles(Pageable page) {
         List<ArticleEntity> articles = articleRepository.findAllArticles(page);
 
@@ -42,8 +47,7 @@ public class ArticleService {
 
     public ArticleResponseDTO createArticle(CreateArticleRequestDTO createArticleRequestDTO,
                                             UserPrincipalDTO principalDTO) {
-        String articleSlug = createArticleRequestDTO.getTitle().replaceAll("\\s", "") + '-' +
-                createArticleRequestDTO.getSubTitle().replaceAll("\\s", "");
+        String articleSlug = getSlug(createArticleRequestDTO.getTitle(), createArticleRequestDTO.getSubTitle());
 
         var author = modelMapper.map(userService.getUserByUsername(principalDTO.getUsername()),
                 UserEntity.class);
