@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class ArticleService {
@@ -22,6 +23,8 @@ public class ArticleService {
     private final ModelMapper modelMapper;
 
     private final UserService userService;
+
+    private final AtomicLong slugId = new AtomicLong(1);
 
     public ArticleService(ArticleRepository articleRepository,
                           ModelMapper modelMapper,
@@ -32,12 +35,10 @@ public class ArticleService {
     }
 
     private String generateSlug(String title, String subTitle) {
-        var articleEntity = new ArticleEntity();
-
         return title.replaceAll("\\s", "")
                 .concat("-").concat(subTitle.replaceAll("\\s", ""))
                 .concat("-")
-                .concat(String.valueOf(articleEntity.getCreatedAt().toEpochDay()));
+                .concat(String.valueOf(slugId.getAndIncrement()));
     }
 
     public List<ArticleGeneralResponseDTO> getAllArticles(Pageable page, String author) {
@@ -73,20 +74,15 @@ public class ArticleService {
         return modelMapper.map(savedArticle, ArticleResponseDTO.class);
     }
 
-    public List<ArticleGeneralResponseDTO> getArticleBySlug(String slug) {
-        var articles = articleRepository.findAllBySlug(slug);
+    public ArticleResponseDTO getArticleBySlug(String slug) {
+        var article = articleRepository.findBySlug(slug);
 
-        if (articles.isEmpty()) throw new ArticleNotFoundException(slug);
+        if (Objects.isNull(article)) throw new ArticleNotFoundException(slug);
 
-        List<ArticleGeneralResponseDTO> articleResponses = new ArrayList<>();
-
-        articles.forEach(article -> articleResponses
-                .add(modelMapper.map(article, ArticleGeneralResponseDTO.class)));
-
-        return articleResponses;
+        return modelMapper.map(article, ArticleResponseDTO.class);
     }
 
-    public ArticleGeneralResponseDTO updateArticle(String articleSlug,
+    public ArticleResponseDTO updateArticle(String articleSlug,
                                                    UpdateArticleRequestDTO updateArticleRequestDTO,
                                                    UserPrincipalDTO principalDTO) {
         var author = modelMapper.map(userService.getUserByUsername(principalDTO.getUsername()),
@@ -102,7 +98,7 @@ public class ArticleService {
 
         var updatedArticle = articleRepository.save(article);
 
-        return modelMapper.map(updatedArticle, ArticleGeneralResponseDTO.class);
+        return modelMapper.map(updatedArticle, ArticleResponseDTO.class);
     }
 
     static class ArticleNotFoundException extends IllegalArgumentException {

@@ -14,9 +14,9 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Integer>
         countQuery = "select count(1) from articles ", nativeQuery = true)
     List<ArticleEntity> findAllArticles(Pageable page);
 
-    List<ArticleEntity> findAllBySlug(String slug);
-
     List<ArticleEntity> findAllByAuthor(Pageable page, UserEntity author);
 
     ArticleEntity findBySlugAndAuthor(String articleSlug, UserEntity author);
+
+    ArticleEntity findBySlug(String slug);
 }

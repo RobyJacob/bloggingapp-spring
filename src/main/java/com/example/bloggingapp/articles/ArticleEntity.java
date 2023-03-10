@@ -15,7 +15,7 @@ public class ArticleEntity  extends BaseEntity {
     @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Column(name = "slug", nullable = false)
+    @Column(name = "slug", nullable = false, unique = true)
     private String slug;
 
     @Column(name = "sub_title")

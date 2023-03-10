@@ -45,13 +45,13 @@ public class ArticleController {
     }
 
     @GetMapping("/{article_slug}")
-    public ResponseEntity<List<ArticleGeneralResponseDTO>> getArticleBySlug(
+    public ResponseEntity<ArticleResponseDTO> getArticleBySlug(
             @PathVariable("article_slug") String articleSlug) {
         return ResponseEntity.ok(articleService.getArticleBySlug(articleSlug));
     }
 
     @PatchMapping("/{article_slug}")
-    public ResponseEntity<ArticleGeneralResponseDTO> updateArticle(
+    public ResponseEntity<ArticleResponseDTO> updateArticle(
             @PathVariable("article_slug") String articleSlug,
             @AuthenticationPrincipal UserPrincipalDTO principalDTO,
             @RequestBody UpdateArticleRequestDTO updateArticleRequestDTO) {
