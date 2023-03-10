@@ -10,6 +10,9 @@ import com.example.bloggingapp.users.dtos.UserPrincipalDTO;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class CommentService {
     private final CommentRespository commentRespository;
@@ -45,5 +48,19 @@ public class CommentService {
         var savedComment = commentRespository.save(comment);
 
         return modelMapper.map(savedComment, CommentResponseDTO.class);
+    }
+
+    public List<CommentResponseDTO> getComments(String articleSlug) {
+        var article = modelMapper.map(articleService.getArticleBySlug(articleSlug),
+                ArticleEntity.class);
+
+        var comments = commentRespository.findAllByArticle(article);
+
+        List<CommentResponseDTO> commentResponses = new ArrayList<>();
+
+        comments.forEach(comment -> commentResponses.add(modelMapper.map(comment,
+                CommentResponseDTO.class)));
+
+        return commentResponses;
     }
 }
