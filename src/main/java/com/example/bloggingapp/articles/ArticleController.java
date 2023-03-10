@@ -3,6 +3,7 @@ package com.example.bloggingapp.articles;
 import com.example.bloggingapp.articles.dtos.ArticleGeneralResponseDTO;
 import com.example.bloggingapp.articles.dtos.ArticleResponseDTO;
 import com.example.bloggingapp.articles.dtos.CreateArticleRequestDTO;
+import com.example.bloggingapp.articles.dtos.UpdateArticleRequestDTO;
 import com.example.bloggingapp.commons.ErrorResponse;
 import com.example.bloggingapp.users.dtos.UserPrincipalDTO;
 import org.springframework.data.domain.PageRequest;
@@ -26,10 +27,11 @@ public class ArticleController {
     @GetMapping
     public ResponseEntity<List<ArticleGeneralResponseDTO>> getAllArticles(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size) {
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "author", required = false) String author) {
         Pageable pageable = PageRequest.of(page, Math.min(size, 10));
 
-        return ResponseEntity.ok(articleService.getAllArticles(pageable));
+        return ResponseEntity.ok(articleService.getAllArticles(pageable, author));
     }
 
     @PostMapping
@@ -46,6 +48,17 @@ public class ArticleController {
     public ResponseEntity<List<ArticleGeneralResponseDTO>> getArticleBySlug(
             @PathVariable("article_slug") String articleSlug) {
         return ResponseEntity.ok(articleService.getArticleBySlug(articleSlug));
+    }
+
+    @PatchMapping("/{article_slug}")
+    public ResponseEntity<ArticleGeneralResponseDTO> updateArticle(
+            @PathVariable("article_slug") String articleSlug,
+            @AuthenticationPrincipal UserPrincipalDTO principalDTO,
+            @RequestBody UpdateArticleRequestDTO updateArticleRequestDTO) {
+        var updatedArticle = articleService.updateArticle(articleSlug, updateArticleRequestDTO,
+                principalDTO);
+
+        return ResponseEntity.accepted().body(updatedArticle);
     }
 
     @ExceptionHandler(ArticleService.ArticleNotFoundException.class)

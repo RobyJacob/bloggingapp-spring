@@ -5,12 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ArticleGeneralResponseDTO {
-    private String title;
-
-    private String subTitle;
-
-    private AuthorResponse author;
-
+public class UpdateArticleRequestDTO {
     private String body;
 }

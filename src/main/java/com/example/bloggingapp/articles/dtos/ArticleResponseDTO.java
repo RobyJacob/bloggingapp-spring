@@ -1,6 +1,5 @@
 package com.example.bloggingapp.articles.dtos;
 
-import com.example.bloggingapp.users.dtos.AuthorResponse;
 import lombok.Getter;
 import lombok.Setter;
 

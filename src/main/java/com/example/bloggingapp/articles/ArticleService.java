@@ -3,6 +3,7 @@ package com.example.bloggingapp.articles;
 import com.example.bloggingapp.articles.dtos.ArticleGeneralResponseDTO;
 import com.example.bloggingapp.articles.dtos.ArticleResponseDTO;
 import com.example.bloggingapp.articles.dtos.CreateArticleRequestDTO;
+import com.example.bloggingapp.articles.dtos.UpdateArticleRequestDTO;
 import com.example.bloggingapp.users.UserEntity;
 import com.example.bloggingapp.users.UserService;
 import com.example.bloggingapp.users.dtos.UserPrincipalDTO;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ArticleService {
@@ -29,13 +31,23 @@ public class ArticleService {
         this.userService = userService;
     }
 
-    private String getSlug(String title, String subTitle) {
+    private String generateSlug(String title, String subTitle) {
+        var articleEntity = new ArticleEntity();
+
         return title.replaceAll("\\s", "")
-                .concat("-").concat(subTitle.replaceAll("\\s", ""));
+                .concat("-").concat(subTitle.replaceAll("\\s", ""))
+                .concat("-")
+                .concat(String.valueOf(articleEntity.getCreatedAt().toEpochDay()));
     }
 
-    public List<ArticleGeneralResponseDTO> getAllArticles(Pageable page) {
-        List<ArticleEntity> articles = articleRepository.findAllArticles(page);
+    public List<ArticleGeneralResponseDTO> getAllArticles(Pageable page, String author) {
+        List<ArticleEntity> articles;
+
+        if (Objects.nonNull(author))
+            articles = articleRepository.findAllByAuthor(page,
+                    modelMapper.map(userService.getUserByUsername(author), UserEntity.class));
+        else
+            articles = articleRepository.findAllArticles(page);
 
         List<ArticleGeneralResponseDTO> articleResponses = new ArrayList<>();
 
@@ -47,7 +59,7 @@ public class ArticleService {
 
     public ArticleResponseDTO createArticle(CreateArticleRequestDTO createArticleRequestDTO,
                                             UserPrincipalDTO principalDTO) {
-        String articleSlug = getSlug(createArticleRequestDTO.getTitle(), createArticleRequestDTO.getSubTitle());
+        String articleSlug = generateSlug(createArticleRequestDTO.getTitle(), createArticleRequestDTO.getSubTitle());
 
         var author = modelMapper.map(userService.getUserByUsername(principalDTO.getUsername()),
                 UserEntity.class);
@@ -74,9 +86,28 @@ public class ArticleService {
         return articleResponses;
     }
 
+    public ArticleGeneralResponseDTO updateArticle(String articleSlug,
+                                                   UpdateArticleRequestDTO updateArticleRequestDTO,
+                                                   UserPrincipalDTO principalDTO) {
+        var author = modelMapper.map(userService.getUserByUsername(principalDTO.getUsername()),
+                UserEntity.class);
+
+        var article = articleRepository.findBySlugAndAuthor(articleSlug, author);
+
+        if (Objects.isNull(article)) throw new ArticleNotFoundException(articleSlug);
+
+        if (Objects.nonNull(updateArticleRequestDTO.getBody())) {
+            article.setBody(updateArticleRequestDTO.getBody());
+        }
+
+        var updatedArticle = articleRepository.save(article);
+
+        return modelMapper.map(updatedArticle, ArticleGeneralResponseDTO.class);
+    }
+
     static class ArticleNotFoundException extends IllegalArgumentException {
         public ArticleNotFoundException(String slug) {
-            super("Article with slug " + slug + " not found");
+            super("Article with slug id " + slug + " not found");
         }
     }
 }

@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Setter
 public class BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
     @CreatedDate

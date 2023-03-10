@@ -1,5 +1,6 @@
 package com.example.bloggingapp.articles;
 
+import com.example.bloggingapp.users.UserEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,8 @@ public interface ArticleRepository extends JpaRepository<ArticleEntity, Integer>
     List<ArticleEntity> findAllArticles(Pageable page);
 
     List<ArticleEntity> findAllBySlug(String slug);
+
+    List<ArticleEntity> findAllByAuthor(Pageable page, UserEntity author);
+
+    ArticleEntity findBySlugAndAuthor(String articleSlug, UserEntity author);
 }
