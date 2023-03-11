@@ -8,6 +8,7 @@ import com.example.bloggingapp.users.UserEntity;
 import com.example.bloggingapp.users.UserService;
 import com.example.bloggingapp.users.dtos.UserPrincipalDTO;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -50,11 +51,11 @@ public class CommentService {
         return modelMapper.map(savedComment, CommentResponseDTO.class);
     }
 
-    public List<CommentResponseDTO> getComments(String articleSlug) {
+    public List<CommentResponseDTO> getComments(String articleSlug, Pageable pageable) {
         var article = modelMapper.map(articleService.getArticleBySlug(articleSlug),
                 ArticleEntity.class);
 
-        var comments = commentRespository.findAllByArticle(article);
+        var comments = commentRespository.findAllByArticle(article, pageable);
 
         List<CommentResponseDTO> commentResponses = new ArrayList<>();
 
